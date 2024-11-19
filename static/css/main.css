@@ -1,0 +1,107 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+header {
+    display: flex;
+    justify-content: center; /* Centers the content horizontally */
+    align-items: center; /* Centers the content vertically */
+    height: 100px; /* Adjust height as needed */
+    background-color: #f8f9fa; /* Light gray background */
+}
+
+.logo {
+    width: 150px; 
+    height: auto;
+    margin-top: 10px;
+}
+
+body {
+    font-family: Helvetica, sans-serif;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f8f8f8;
+    position: relative;
+}
+
+.playlists-container{
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    margin-left: 10%;
+    margin-right: 10%;
+    max-width: 100%;
+    padding: 20px;
+}
+
+.playlist {
+    text-align: center;
+    overflow: hidden;
+    /* max-width: 60%; */
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.playlist img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1; /* Keeps images square */
+    border-radius: 2px;
+    object-fit: cover; /* Ensures image covers the square area */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.playlist p {
+    margin-top: 10px;
+    font-size: 1em;
+    color: #333;
+}
+
+.playlist-page {
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    position: absolute;
+    top: 50%;
+    bottom: 50%
+}
+
+.playlist-page-div {
+    flex: 1;
+    width: 50%;
+}
+
+.playlist-page-image img{
+    margin: auto;
+    display: block;
+    width: 50%;
+    height: 50%
+}
+
+.playlist-page-image p {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.playlist-tracks {
+    margin: 10%
+}
+
+.track-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 1%
+}
+
+.title-header {
+    min-width: 100%;
+    text-align: center;
+    margin-top: 5%;
+    margin-bottom: 1%;
+}
