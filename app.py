@@ -279,7 +279,6 @@ def get_tracks(playlist_id):
                     playlist_id=playlist_id,
                     artist_id=artist_id
                 )
-                print(track_name)
                 get_artists(artist_id)
                 db.session.add(new_track)
         db.session.commit()
@@ -288,7 +287,6 @@ def get_tracks(playlist_id):
 
 def get_audio_features(num_tracks):
     track_ids = db.session.query(Track.track_id).limit(-num_tracks).all()
-    print(track_ids)
     access_token = refresh_access_token()
     if access_token:
         headers = {
@@ -356,5 +354,6 @@ scheduler.add_job(update, 'interval', days=1)
 scheduler.start()
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5000)
+    time.sleep(1)
 
