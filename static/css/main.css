@@ -10,6 +10,7 @@ header {
     align-items: center; /* Centers the content vertically */
     height: 100px; /* Adjust height as needed */
     background-color: #f8f9fa; /* Light gray background */
+    margin-bottom: 10px;
 }
 
 .logo {
@@ -75,6 +76,7 @@ body {
 @media only screen and (max-width: 500px) {
     .playlist-page {
       flex-direction: column;
+      display: contents;
     }
   }
 
