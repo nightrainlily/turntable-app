@@ -50,6 +50,7 @@ def update_similarities():
     return rec
 
 def get_recs(playlist_id):
+    update_similarities()
     return rec_df.loc[rec_df['playlist_id'] == playlist_id, 'rec'].values[0]
 
 rec_df = update_similarities()

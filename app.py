@@ -15,9 +15,10 @@ load_dotenv()
 
 client_secret = os.getenv('CLIENT_SECRET')
 client_id = os.getenv('CLIENT_ID')
-redirect_uri=os.getenv('REDIRECT_URI')
 scope = os.getenv('SCOPE')
 secret_key = 'aaaaaaaaaaaaaaaa'
+
+redirect_uri=os.getenv('REDIRECT_URI_PROD')
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///playlists.db'
