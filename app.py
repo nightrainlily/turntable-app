@@ -115,6 +115,10 @@ def index():
     else:
         return render_template('index.html', playlists=None, tracks=None)
     
+@app.route('/about')
+def about():
+    return render_template('about.html')
+    
 @app.route('/playlist/<string:playlist_id>')
 def playlist_details(playlist_id):
     playlist = Playlist.query.filter_by(playlist_id=playlist_id).first_or_404()

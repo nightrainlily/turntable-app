@@ -7,7 +7,15 @@
 {% block body %}
 <div class="header">
     <div class="logo"></div>
+    <div class="about">
+        <p><a href="{{ url_for('about') }}">about</a></p>
+    </div>
 </div>
+<!-- <div class="header-text">
+    <p>
+        welcome to turntable, a service of <a href="https://recordstore.substack.com">Record Store</a> by amaya lim. explore playlists by artist or by recommendation. the recommendation algorithm is built on audio features and genre markers, not ads or popularity. isn't that nice?
+    </p>
+</div> -->
 <div class="playlists-container">
     {% for playlist in playlists %}
         <div class="playlist">
