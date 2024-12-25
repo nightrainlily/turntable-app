@@ -1,4 +1,6 @@
-from flask import Flask, session, redirect, request, url_for, render_template
+from flask import Flask, session, redirect, request, url_for, render_template, jsonify
+from flask_executor import Executor
+from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql.sqltypes import ARRAY
 from sqlalchemy import desc, cast, func
@@ -10,6 +12,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import re
 import time
 import model
+import graphs
 
 load_dotenv()
 
@@ -23,6 +26,9 @@ redirect_uri=os.getenv('REDIRECT_URI_PROD')
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///playlists.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
+executor = Executor(app)
 app.secret_key = secret_key
 db = SQLAlchemy(app)
 
@@ -105,11 +111,17 @@ def model_playlists(playlist_id):
     sorted_playlists = sorted(model_playlists, key=lambda p: int(p.name.split()[0]), reverse=True)
     return sorted_playlists
 
-@app.route('/')
+def make_graphs(playlist_id):
+    playlist = Playlist.query.filter_by(playlist_id=playlist_id).first_or_404()
+    recs = model_playlists(playlist_id)
+    audio_graph = graphs.spider_graph(playlist, recs)
+    genre_graph = graphs.genres_graph(playlist, recs)
+    return [audio_graph, genre_graph]
+
+@app.route('/', methods=['POST', 'GET'])
 def index():
     playlists = Playlist.query.order_by(desc(cast(Playlist.name, db.Integer))).all()
     tracks = Track.query.all()
-
     if playlists:
         return render_template('index.html', playlist_tracks=playlist_tracks, playlist_genres=playlist_genres, playlists=playlists, tracks=tracks)
     else:
@@ -119,13 +131,14 @@ def index():
 def about():
     return render_template('about.html')
     
-@app.route('/playlist/<string:playlist_id>')
+@app.route('/playlist/<string:playlist_id>', methods=['POST', 'GET'])
 def playlist_details(playlist_id):
     playlist = Playlist.query.filter_by(playlist_id=playlist_id).first_or_404()
     playlist_tracks = Track.query.filter_by(playlist_id=playlist_id).all()
     sorted_playlists = model_playlists(playlist_id)
-    print(model_playlists)
-    return render_template('playlist.html', playlist=playlist, playlist_tracks=playlist_tracks, model_playlists=sorted_playlists)
+    graphs = make_graphs(playlist_id)
+    viewport = request.args.get('width', type=int)
+    return render_template('playlist.html', playlist=playlist, playlist_tracks=playlist_tracks, model_playlists=sorted_playlists, graphs = graphs, viewport=viewport)
 
 @app.route('/artist/<string:artist_id>')
 def artist_playlists(artist_id):
@@ -141,8 +154,6 @@ def artist_playlists(artist_id):
         reverse=True
     )
     return render_template('artist.html', artist_playlists=sorted_playlists, artist_name=artist_name)
-
-# @app.route('/recommendations/<string:playlist_id>')
 
 @app.route('/authorize')
 def authorize():
@@ -187,7 +198,6 @@ def callback():
             return redirect(url_for('index'))
     return redirect(url_for('authorize'))       
 
-#refresh
 def refresh_access_token():
     url = "https://api.spotify.com/v1/me"
     access_token = session.get('access_token')
