@@ -68,7 +68,7 @@ def spider_graph(playlist, recs):
     return graph_html, graph_image
 
 def genres_scatter():
-    with open('/resources/enao.html', 'r', encoding='utf-8') as file:
+    with open('resources/enao.html', 'r', encoding='utf-8') as file:
         html_content = file.read()
     soup = BeautifulSoup(html_content, 'html.parser')
 
