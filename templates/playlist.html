@@ -2,8 +2,8 @@
 
 {% block head %}
 <title>{{ playlist.name }}</title>
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script defer src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 {% endblock %}
 
 {% block body %}
@@ -45,7 +45,7 @@
         <h2 class="rec-title">more like {{ playlist.name }}</h2>
         {% for playlist in model_playlists %}
             <div class="playlist">
-                <a href="{{ url_for('playlist_details', playlist_id=playlist.playlist_id) }}">
+                <a id="playlist-link" data-playlist-id="{{ playlist.playlist_id }}" href="#">
                     <img src="{{ playlist.image }}" alt="{{ playlist.name }}">
                 </a>
                 <p>{{ playlist.name }}</p>

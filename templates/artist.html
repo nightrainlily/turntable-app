@@ -17,20 +17,4 @@
         </div>
     {% endfor %}
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const width = window.innerWidth;
-        const links = document.querySelectorAll('#playlist-link');
-
-        links.forEach(link => {
-            const playlistId = link.dataset.playlistId;
-            link.href = `/playlist/${playlistId}?width=${width}`;
-
-            link.addEventListener('click', (event) => {
-                event.preventDefault();
-                window.location.href = link.href;
-            });
-        });
-    });
-</script>
 {% endblock %}
