@@ -25,7 +25,7 @@ def flatten(itr):
             except:
                 yield x
 
-def spider_graph(playlist, recs):
+def spider_graph(playlist, recs, viewport):
     features = model.get_audio_features()
     # features.drop(['key', 'liveness'], axis=1, inplace=True)
 
@@ -62,10 +62,13 @@ def spider_graph(playlist, recs):
         colorway=colorway
     )
 
-    graph_html = fig.to_html(full_html=False, config={'responsive': True, 'displayModeBar': True})
-    graph_bytes = pio.to_image(fig, format='jpg')
-    graph_image = base64.b64encode(graph_bytes).decode('utf-8')
-    return graph_html, graph_image
+    if viewport < 768:
+        graph_bytes = pio.to_image(fig, format='jpg')
+        graph_image = base64.b64encode(graph_bytes).decode('utf-8')
+        return graph_image
+    else:
+        graph_html = fig.to_html(full_html=False, config={'responsive': True, 'displayModeBar': True})
+        return graph_html
 
 def genres_scatter():
     with open('resources/enao.html', 'r', encoding='utf-8') as file:
@@ -131,7 +134,7 @@ def genres_scatter():
     )
     return fig, get_coords
 
-def genres_graph(playlist, recs):
+def genres_graph(playlist, recs, viewport):
     all_playlist_genres = model.get_genres()
     fig, get_coords = genres_scatter()
 
@@ -141,8 +144,6 @@ def genres_graph(playlist, recs):
     position = 0
     for this_playlist in playlists:
         playlist_genres = list(set(all_playlist_genres[all_playlist_genres['playlist_id'] == this_playlist.playlist_id]['genres'].values[0]))
-        # playlist_genres = all_playlist_genres[all_playlist_genres['playlist_id'] == this_playlist.playlist_id]['genres'].values[0]
-        print(playlist_genres)
         points = []
         for genre in playlist_genres:
             points.append(get_coords(genre))
@@ -164,9 +165,12 @@ def genres_graph(playlist, recs):
         )
         position += 1
 
-    graph_html = fig.to_html(full_html=False)
-    graph_bytes = pio.to_image(fig, format='jpg')
-    graph_image = base64.b64encode(graph_bytes).decode('utf-8')
-    return graph_html, graph_image
+    if viewport < 768:
+        graph_bytes = pio.to_image(fig, format='jpg')
+        graph_image = base64.b64encode(graph_bytes).decode('utf-8')
+        return graph_image
+    else:
+        graph_html = fig.to_html(full_html=False)
+        return graph_html
 
 

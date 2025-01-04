@@ -101,12 +101,12 @@ def model_playlists(playlist_id):
     sorted_playlists = sorted(model_playlists, key=lambda p: int(p.name.split()[0]), reverse=True)
     return sorted_playlists
 
-def make_graphs(playlist_id):
+def make_graphs(playlist_id, viewport):
     playlist = Playlist.query.filter_by(playlist_id=playlist_id).first_or_404()
     recs = model_playlists(playlist_id)
-    audio_graph = graphs.spider_graph(playlist, recs)
-    genre_graph = graphs.genres_graph(playlist, recs)
-    return [audio_graph, genre_graph]
+    audio_graph = graphs.spider_graph(playlist, recs, viewport)
+    genre_graph = graphs.genres_graph(playlist, recs, viewport)
+    return audio_graph, genre_graph
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
@@ -140,8 +140,8 @@ def playlist_details(playlist_id):
         .order_by(order_cases)
     )
     sorted_playlists = model_playlists(playlist_id)
-    graphs = make_graphs(playlist_id)
     viewport = request.args.get('width', type=int)
+    graphs = make_graphs(playlist_id, viewport)
     return render_template('playlist.html', playlist=playlist, playlist_tracks=playlist_tracks, model_playlists=sorted_playlists, graphs=graphs, viewport=viewport)
 
 @app.route('/artist/<string:artist_id>')
@@ -237,7 +237,6 @@ def add_track_to_playlist(playlist_id, track_id):
     exists = db.session.query(tracklist).filter_by(playlist_id=playlist_id, track_id=track_id).first()  
     if playlist and track and exists==None:
         playlist.tracks.append(track)
-        print('added track', track_id, 'to', playlist_id)
     elif playlist:
         print(f"Error on '{playlist.name}'")
     db.session.commit()
