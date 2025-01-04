@@ -141,6 +141,8 @@ def genres_graph(playlist, recs):
     position = 0
     for this_playlist in playlists:
         playlist_genres = list(set(all_playlist_genres[all_playlist_genres['playlist_id'] == this_playlist.playlist_id]['genres'].values[0]))
+        # playlist_genres = all_playlist_genres[all_playlist_genres['playlist_id'] == this_playlist.playlist_id]['genres'].values[0]
+        print(playlist_genres)
         points = []
         for genre in playlist_genres:
             points.append(get_coords(genre))

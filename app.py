@@ -1,12 +1,12 @@
-from flask import Flask, session, redirect, request, url_for, render_template, jsonify
-from flask_cors import CORS, cross_origin
+from flask import Flask, session, redirect, request, url_for, render_template
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.sql.sqltypes import ARRAY
-from sqlalchemy import desc, cast, func
+from flask_migrate import Migrate
+from sqlalchemy import desc, cast, case
 import requests
 import os
 from dotenv import load_dotenv
-from urllib.parse import urlencode, quote
+from urllib.parse import urlencode
 from apscheduler.schedulers.background import BackgroundScheduler
 import re
 import time
@@ -29,6 +29,7 @@ cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 app.secret_key = secret_key
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 class Playlist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -43,7 +44,7 @@ class Playlist(db.Model):
         return f"<{self.name}>"
 
 class Track(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, auto_increment=True)
     track_id = db.Column(db.String(50), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     artist = db.Column(db.String(100), nullable=False)
@@ -58,8 +59,7 @@ class Track(db.Model):
     liveness = db.Column(db.Float)
     valence = db.Column(db.Float)
     tempo = db.Column(db.Float)
-    playlist_id = db.Column(db.Integer, db.ForeignKey('playlist.playlist_id'), nullable=False)
-    artist_id = db.Column(db.String, db.ForeignKey('artist.artist_id'))
+    artist_id = db.Column(db.String, db.ForeignKey('artist.artist_id'), nullable=False)
 
     playlists = db.relationship('Playlist', secondary='tracklist', back_populates='tracks')
 
@@ -78,6 +78,7 @@ class Artist(db.Model):
         return f"<{self.name}"
 
 tracklist = db.Table('tracklist',
+    db.Column('id', db.Integer, primary_key=True),
     db.Column('track_id', db.String(50), db.ForeignKey('track.track_id')),
     db.Column('playlist_id', db.String(50), db.ForeignKey('playlist.playlist_id'))
 )
@@ -90,19 +91,6 @@ with app.app_context():
 
 def flatten(lst):
     return [item for sublist in lst for item in sublist]
-
-# def playlist_tracks(playlist_id):
-#     track_ids = db.session.query(tracklist.c.playlist_id).filter_by(playlist_id=playlist_id).all()
-#     tracks = db.session.query(Track).filter(Track.track_id.in_(track_ids)).all()
-#     return [track.name for track in tracks]
-
-# def playlist_genres(playlist_id):
-#     playlist_artists = db.session.query(Track.artist_id).filter_by(playlist_id=playlist_id).all()
-#     genres = []
-#     for artist in playlist_artists:
-#         genre_list = db.session.query(Artist.genres).filter_by(artist_id=artist.artist_id).first().genres
-#         genres.append((genre_list))
-#     return flatten(genres)
 
 def model_playlists(playlist_id):
     recs = model.get_recs(playlist_id=playlist_id)
@@ -123,9 +111,9 @@ def make_graphs(playlist_id):
 @app.route('/', methods=['POST', 'GET'])
 def index():
     playlists = Playlist.query.order_by(desc(cast(Playlist.name, db.Integer))).all()
-    tracks = Track.query.all()
+    # tracks = Track.query.all()
     if playlists:
-        return render_template('index.html', playlists=playlists, tracks=tracks)
+        return render_template('index.html', playlists=playlists)
     else:
         return render_template('index.html', playlists=None, tracks=None)
     
@@ -136,10 +124,21 @@ def about():
 @app.route('/playlist/<string:playlist_id>', methods=['POST', 'GET'])
 def playlist_details(playlist_id):
     playlist = Playlist.query.filter_by(playlist_id=playlist_id).first_or_404()
-    print(playlist)
-    track_ids = [track_id[0] for track_id in db.session.query(tracklist.c.track_id).filter_by(playlist_id=playlist_id).all()]
-    print(track_ids)
-    playlist_tracks = db.session.query(Track).filter(Track.track_id.in_(track_ids)).all()
+    track_ids = [
+        track_id[0]
+        for track_id in db.session.query(tracklist.c.track_id)
+        .filter_by(playlist_id=playlist_id)
+        .order_by(tracklist.c.id)
+        .all()
+    ]
+    order_cases = case(
+        *( (Track.track_id == track_id, index) for index, track_id in enumerate(track_ids) )
+    )
+    playlist_tracks = (
+        db.session.query(Track)
+        .filter(Track.track_id.in_(track_ids))
+        .order_by(order_cases)
+    )
     sorted_playlists = model_playlists(playlist_id)
     graphs = make_graphs(playlist_id)
     viewport = request.args.get('width', type=int)
@@ -151,7 +150,8 @@ def artist_playlists(artist_id):
     tracks = db.session.query(Track).filter_by(artist_id=artist_id).all()
     artist_playlists = []
     for track in tracks:
-        playlists = Playlist.query.filter_by(playlist_id=track.playlist_id).all()
+        playlist_id = db.session.query(tracklist.c.playlist_id).filter_by(track_id=track.track_id).first().playlist_id
+        playlists = db.session.query(Playlist).filter_by(playlist_id=playlist_id).all()
         artist_playlists.append(playlists)
     sorted_playlists = sorted(
         artist_playlists,
@@ -282,7 +282,7 @@ def get_playlists(num_playlists, limit=50):
                     )
                     db.session.add(new_playlist)
                     db.session.commit()
-                    # get_tracks(playlist_id)
+                    get_tracks(playlist_id)
                     new_playlist_count+=1
         print(new_playlist_count)
         return new_playlist_count
@@ -314,7 +314,7 @@ def get_playlist(playlist_id):
                 image=image
             )
             db.session.add(new_playlist)
-        db.session.commit()
+            db.session.commit()
         get_tracks(playlist_id)
         return redirect(url_for('index'))
     return False
@@ -343,13 +343,12 @@ def get_tracks(playlist_id):
                     track_id=track_id,
                     name=track_name,
                     artist=artist_name,
-                    playlist_id=playlist_id,
                     artist_id=artist_id
                 )
                 get_artists(artist_id)
                 db.session.add(new_track)
+                db.session.commit()
             add_track_to_playlist(playlist_id, track_id)
-        db.session.commit()
     return
 
 
@@ -445,7 +444,9 @@ def get_artists(artist_id):
 
 @app.route('/update')
 def update():
-    get_tracks('47UnKNCsbMqleUUAt2WJKn')
+    model.update_similarities()
+    num_playlists = get_playlists(10, 10)
+    # get_audio_features(100)
     return redirect(url_for('index'))
 
 scheduler = BackgroundScheduler()
@@ -454,5 +455,4 @@ scheduler.start()
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
-    time.sleep(1)
 
