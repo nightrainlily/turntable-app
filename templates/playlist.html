@@ -67,7 +67,10 @@
         </div>
         {% endfor %}
     {% endif %}
-    <p class="graph-captions">for interactive graphs, use desktop. base genre graph via <a href="https://everynoise.com/">everynoise.com</a></p>
+    <div class="graph-captions">
+        <p>for interactive graphs, use desktop. base genre graph via <a href="https://everynoise.com/">everynoise.com</a></p>
+        <p>the audio features endpoint has been <a href="https://developer.spotify.com/blog/2024-11-27-changes-to-the-web-api">depreciated</a> since November 2024. playlists made after this date are missing audio feature data.</p>
+    </div>
     <!-- {# {% for graph in graphs %}
     <div class="features-graph">
         {{ graph[0]|safe }}

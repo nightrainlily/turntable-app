@@ -271,7 +271,7 @@ def get_playlists(num_playlists, limit=50):
                 image = playlist['images'][0]['url']
 
                 existing_playlist = db.session.query(Playlist.playlist_id).filter_by(playlist_id=playlist_id).first()
-                image_reg = "^https:\/\/image-cdn-ak"
+                image_reg = "^https:\/\/image-cdn-"
                 if not existing_playlist and re.match(image_reg, image) != None:
                     new_playlist = Playlist(
                         name=name,
@@ -320,6 +320,7 @@ def get_playlist(playlist_id):
 
 def get_tracks(playlist_id):
     access_token = refresh_access_token()
+    print(access_token)
     if access_token:
         headers = {
             'Authorization': f'Bearer {access_token}',
@@ -444,7 +445,9 @@ def get_artists(artist_id):
 @app.route('/update')
 def update():
     model.update_similarities()
-    num_playlists = get_playlists(10, 10)
+    print('got here')
+    num_playlists = get_playlists(20, 20)
+    print(num_playlists)
     # get_audio_features(100)
     return redirect(url_for('index'))
 
@@ -454,5 +457,5 @@ scheduler.start()
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port, debug=True)
 
